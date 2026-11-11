@@ -239,3 +239,13 @@ def test_validate_and_map_packet_rejects_invalid_fields() -> None:
     with pytest.raises(TelemetryValidationError, match="boat_id"):
         validate_and_map_packet(empty_boat)
 
+    bad_nav_enum = _make_proto_packet()
+    bad_nav_enum.navegacao.status_navegacao = 99  # type: ignore[assignment]
+    with pytest.raises(TelemetryValidationError, match="status_navegacao"):
+        validate_and_map_packet(bad_nav_enum)
+
+    bad_link_enum = _make_proto_packet()
+    bad_link_enum.rede.tipo_enlace = 99  # type: ignore[assignment]
+    with pytest.raises(TelemetryValidationError, match="tipo_enlace"):
+        validate_and_map_packet(bad_link_enum)
+
