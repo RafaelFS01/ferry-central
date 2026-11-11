@@ -155,6 +155,9 @@ class TelemetryServiceServicer(telemetry_pb2_grpc.TelemetryServiceServicer):
                                     return_exceptions=True,
                                 )
                                 for outcome in (direct_res, decoupled_res):
+                                    if isinstance(outcome, asyncio.CancelledError):
+                                        raise outcome
+                                for outcome in (direct_res, decoupled_res):
                                     if isinstance(outcome, BaseException):
                                         raise outcome
                                 inserted_in_db = bool(direct_res)
@@ -164,7 +167,14 @@ class TelemetryServiceServicer(telemetry_pb2_grpc.TelemetryServiceServicer):
                                 )
                             await session.commit()
                         except BaseException:
-                            await session.rollback()
+                            try:
+                                await session.rollback()
+                            except Exception:
+                                logger.debug(
+                                    "Falha secundária ao executar rollback da sessão para packet_id=%s.",
+                                    mapped.packet_id,
+                                    exc_info=True,
+                                )
                             raise
                 else:
                     await self._publish_decoupled(mapped)
