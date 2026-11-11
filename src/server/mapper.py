@@ -185,11 +185,26 @@ def validate_and_map_packet(
             "perda_pacotes_percentual": perda_pct,
             "tamanho_buffer_local": int(rede.tamanho_buffer_local),
             "tentativa_envio": int(rede.tentativa_envio),
-            "tipo_enlace": telemetry_pb2.LinkType.Name(rede.tipo_enlace),
         }
 
+    try:
+        nav_status_name = telemetry_pb2.NavigationStatus.Name(nav.status_navegacao)
+    except ValueError as exc:
+        raise TelemetryValidationError(
+            f"Campo 'navegacao.status_navegacao' possui valor inválido: {nav.status_navegacao}."
+        ) from exc
+
+    if rede_dict is not None:
+        try:
+            rede_dict["tipo_enlace"] = telemetry_pb2.LinkType.Name(
+                packet.rede.tipo_enlace
+            )
+        except ValueError as exc:
+            raise TelemetryValidationError(
+                f"Campo 'rede.tipo_enlace' possui valor inválido: {packet.rede.tipo_enlace}."
+            ) from exc
+
     sequence_number = _extract_sequence_number(packet, metadata)
-    nav_status_name = telemetry_pb2.NavigationStatus.Name(nav.status_navegacao)
 
     record = TelemetryRecordInput(
         packet_id=packet_id,
