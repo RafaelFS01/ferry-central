@@ -114,6 +114,24 @@ class ServerSettings:
         if cache_ttl < 0:
             raise ValueError("IDEMPOTENCY_CACHE_TTL_SECONDS não pode ser negativo.")
 
+        shutdown_grace_seconds = float(
+            os.getenv(
+                "GRPC_SHUTDOWN_GRACE_SECONDS",
+                str(DEFAULT_SHUTDOWN_GRACE_SECONDS),
+            )
+        )
+        if shutdown_grace_seconds < 0:
+            raise ValueError("GRPC_SHUTDOWN_GRACE_SECONDS não pode ser negativo.")
+
+        max_message_length_bytes = int(
+            os.getenv(
+                "GRPC_MAX_MESSAGE_LENGTH_BYTES",
+                str(DEFAULT_MAX_MESSAGE_LENGTH_BYTES),
+            )
+        )
+        if max_message_length_bytes <= 0:
+            raise ValueError("GRPC_MAX_MESSAGE_LENGTH_BYTES deve ser maior que zero.")
+
         return cls(
             grpc_host=_parse_optional_str(os.getenv("GRPC_HOST")) or DEFAULT_GRPC_HOST,
             grpc_port=grpc_port,
@@ -130,18 +148,8 @@ class ServerSettings:
             aws_endpoint_url=_parse_optional_str(os.getenv("AWS_ENDPOINT_URL")),
             idempotency_cache_size=cache_size,
             idempotency_cache_ttl_seconds=cache_ttl,
-            shutdown_grace_seconds=float(
-                os.getenv(
-                    "GRPC_SHUTDOWN_GRACE_SECONDS",
-                    str(DEFAULT_SHUTDOWN_GRACE_SECONDS),
-                )
-            ),
-            max_message_length_bytes=int(
-                os.getenv(
-                    "GRPC_MAX_MESSAGE_LENGTH_BYTES",
-                    str(DEFAULT_MAX_MESSAGE_LENGTH_BYTES),
-                )
-            ),
+            shutdown_grace_seconds=shutdown_grace_seconds,
+            max_message_length_bytes=max_message_length_bytes,
             log_level=(_parse_optional_str(os.getenv("LOG_LEVEL")) or "INFO").upper(),
         )
 
