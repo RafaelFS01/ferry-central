@@ -104,6 +104,8 @@ async def build_server(
 
     bound_port = server.add_insecure_port(cfg.bind_address)
     if bound_port == 0:
+        if resolved_publisher is not None and publisher is None:
+            await resolved_publisher.close()
         raise RuntimeError(
             f"Não foi possível fazer bind gRPC no endereço {cfg.bind_address}."
         )
@@ -123,18 +125,19 @@ async def shutdown_runtime(
     dispose_db: bool = True,
 ) -> None:
     """Executa graceful shutdown drenando RPCs e encerrando conexões externas."""
-    await runtime.health_servicer.set("", health_pb2.HealthCheckResponse.NOT_SERVING)
-    await runtime.health_servicer.set(
-        TELEMETRY_SERVICE_NAME,
-        health_pb2.HealthCheckResponse.NOT_SERVING,
-    )
-    await runtime.server.stop(grace=runtime.settings.shutdown_grace_seconds)
+    try:
+        await runtime.health_servicer.set("", health_pb2.HealthCheckResponse.NOT_SERVING)
+        await runtime.health_servicer.set(
+            TELEMETRY_SERVICE_NAME,
+            health_pb2.HealthCheckResponse.NOT_SERVING,
+        )
+        await runtime.server.stop(grace=runtime.settings.shutdown_grace_seconds)
+    finally:
+        if runtime.publisher is not None:
+            await runtime.publisher.close()
 
-    if runtime.publisher is not None:
-        await runtime.publisher.close()
-
-    if dispose_db:
-        await dispose_engine()
+        if dispose_db:
+            await dispose_engine()
 
 
 async def serve(settings: ServerSettings | None = None) -> None:
@@ -171,6 +174,8 @@ async def serve(settings: ServerSettings | None = None) -> None:
         )
         for task in pending:
             task.cancel()
+        if pending:
+            await asyncio.gather(*pending, return_exceptions=True)
     except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("Interrupção recebida, iniciando graceful shutdown...")
     finally:
