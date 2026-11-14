@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+  --font-sans: var(--font-body), system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+  --bg: #eef1f5;
+  --surface: #ffffff;
+  --surface-2: #f5f7fa;
+  --line: #d8dee6;
+  --ink: #0f172a;
+  --muted: #5b6676;
+  --accent: #0b4f8a;
+  --ok: #15803d;
+  --warn: #b45309;
+  --danger: #dc2626;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0b1017;
+    --surface: #111821;
+    --surface-2: #17202b;
+    --line: #263241;
+    --ink: #e6edf5;
+    --muted: #8b98a8;
+    --accent: #3b82c4;
+    --ok: #4ade80;
+    --warn: #f59e0b;
+    --danger: #f87171;
+  }
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+body {
+  font-variant-numeric: tabular-nums;
+}
+
+/* O ícone do barco é um divIcon; remove o fundo branco padrão do Leaflet */
+.boat-marker {
+  background: none;
+  border: none;
+}
+
+.boat-marker svg {
+  transition: transform 800ms ease-out;
+}
