@@ -1,5 +1,5 @@
 // Geografia da travessia Salvador–Itaparica na Baía de Todos-os-Santos.
-// Coordenadas dos terminais iguais às do simulador do barco (ferry-boat/src/simulator/route.ts).
+import { BOM_DESPACHO, SAO_JOAQUIM, type PassageTerminal } from './passage';
 
 export interface Terminal {
   name: string;
@@ -7,13 +7,24 @@ export interface Terminal {
   position: [number, number];
 }
 
-export const TERMINAL_SAO_JOAQUIM: Terminal = { name: 'Terminal São Joaquim', city: 'Salvador', position: [-12.9482, -38.5028] };
-export const TERMINAL_BOM_DESPACHO: Terminal = { name: 'Terminal Bom Despacho', city: 'Itaparica', position: [-12.9774, -38.5724] };
+const toTerminal = (terminal: PassageTerminal): Terminal => ({
+  name: `Terminal ${terminal.name}`,
+  city: terminal.city,
+  position: [terminal.lat, terminal.lon],
+});
 
-export const TERMINALS = [TERMINAL_SAO_JOAQUIM, TERMINAL_BOM_DESPACHO] as const;
+export const TERMINALS = [toTerminal(SAO_JOAQUIM), toTerminal(BOM_DESPACHO)] as const;
 
 /** Rota nominal (ortodrômica) usada pelo simulador. */
-export const NOMINAL_ROUTE: [number, number][] = [TERMINAL_SAO_JOAQUIM.position, TERMINAL_BOM_DESPACHO.position];
+export const NOMINAL_ROUTE: [number, number][] = TERMINALS.map((terminal) => terminal.position);
 
 export const MAP_CENTER: [number, number] = [-12.9628, -38.5376];
 export const MAP_ZOOM = 13;
+
+/** Posição estimada após navegar `distanceNm` no rumo dado (vetor de proa da carta). */
+export function projectPosition([lat, lon]: [number, number], headingDeg: number, distanceNm: number): [number, number] {
+  const rad = (headingDeg * Math.PI) / 180;
+  const dLat = (distanceNm * Math.cos(rad)) / 60;
+  const dLon = (distanceNm * Math.sin(rad)) / (60 * Math.cos((lat * Math.PI) / 180));
+  return [lat + dLat, lon + dLon];
+}

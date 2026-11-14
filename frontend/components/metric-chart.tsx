@@ -1,6 +1,7 @@
 'use client';
 
-import { Line, LineChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useId } from 'react';
+import { Area, AreaChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import type { TelemetryPoint } from '@/lib/central-api';
 import { formatNumber, formatShortTime, formatTime } from '@/lib/format';
 
@@ -16,33 +17,52 @@ interface MetricChartProps {
   threshold?: number;
 }
 
-/** Rótulos curtos no eixo Y para caber em 44 px: 2200 -> "2,2k". */
-const formatAxis = (value: number) => (Math.abs(value) >= 1000 ? `${formatNumber(value / 1000, 1)}k` : formatNumber(value));
-
-/** Série temporal compacta para o painel lateral. */
+/** Série temporal em área com degradê, sem moldura, para o rail de conning. */
 export function MetricChart({ title, unit, data, pick, color, decimals = 0, domain = ['auto', 'auto'], threshold }: MetricChartProps) {
+  const gradientId = `fill-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const series = data.map((point) => ({ time: point.time, value: pick(point) }));
   const last = series.at(-1)?.value ?? null;
 
   return (
-    <figure className="rounded-lg border border-line bg-surface-2 p-3">
-      <figcaption className="mb-1 flex items-baseline justify-between">
-        <span className="text-xs font-medium uppercase tracking-wider text-muted">{title}</span>
-        <span className="text-sm font-semibold">{formatNumber(last, decimals)} <span className="text-xs font-normal text-muted">{unit}</span></span>
+    <figure>
+      <figcaption className="mb-2 flex items-baseline justify-between">
+        <span className="text-sm text-muted">{title}</span>
+        <span className="font-mono text-sm">
+          {formatNumber(last, decimals)} <span className="text-xs text-muted">{unit}</span>
+        </span>
       </figcaption>
-      <div className="h-28">
+      <div className="h-24">
         <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={series} margin={{ top: 4, right: 4, bottom: 0, left: -18 }}>
-            <XAxis dataKey="time" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={formatShortTime} tick={{ fontSize: 10, fill: 'var(--muted)' }} stroke="var(--line)" minTickGap={40} />
-            <YAxis domain={domain} tick={{ fontSize: 10, fill: 'var(--muted)' }} stroke="var(--line)" width={44} tickFormatter={formatAxis} />
-            {threshold !== undefined && <ReferenceLine y={threshold} stroke="var(--danger)" strokeDasharray="4 4" />}
+          <AreaChart data={series} margin={{ top: 4, right: 0, bottom: 0, left: 0 }}>
+            <defs>
+              <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor={color} stopOpacity={0.35} />
+                <stop offset="1" stopColor={color} stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <XAxis
+              dataKey="time"
+              type="number"
+              scale="time"
+              domain={['dataMin', 'dataMax']}
+              tickFormatter={formatShortTime}
+              tick={{ fontSize: 10, fill: 'var(--muted)', fontFamily: 'var(--font-jetbrains)' }}
+              stroke="var(--line)"
+              tickLine={false}
+              minTickGap={48}
+            />
+            <YAxis domain={domain} hide />
+            {threshold !== undefined && <ReferenceLine y={threshold} stroke="var(--danger)" strokeDasharray="3 4" strokeOpacity={0.8} />}
             <Tooltip
               labelFormatter={(time) => formatTime(Number(time))}
               formatter={(value) => [`${formatNumber(Number(value), decimals)} ${unit}`, title]}
-              contentStyle={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 8, fontSize: 12 }}
+              contentStyle={{ background: 'var(--surface)', border: '1px solid var(--line)', borderRadius: 6, fontSize: 12, fontFamily: 'var(--font-jetbrains)' }}
+              labelStyle={{ color: 'var(--muted)' }}
+              itemStyle={{ color: 'var(--ink)' }}
+              cursor={{ stroke: 'var(--muted)', strokeDasharray: '2 3' }}
             />
-            <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} connectNulls />
-          </LineChart>
+            <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.75} fill={`url(#${gradientId})`} isAnimationActive={false} connectNulls />
+          </AreaChart>
         </ResponsiveContainer>
       </div>
     </figure>

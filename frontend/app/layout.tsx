@@ -1,8 +1,9 @@
 import type { Metadata } from 'next';
-import { IBM_Plex_Sans } from 'next/font/google';
+import { JetBrains_Mono, SUSE } from 'next/font/google';
 import './globals.css';
 
-const body = IBM_Plex_Sans({ subsets: ['latin'], weight: ['400', '500', '600'], variable: '--font-body' });
+const sans = SUSE({ subsets: ['latin'], variable: '--font-suse' });
+const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-jetbrains' });
 
 export const metadata: Metadata = {
   title: 'Dashboard Náutico — Central',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="pt-BR" className={body.variable}>
+    <html lang="pt-BR" className={`${sans.variable} ${mono.variable}`}>
       <body className="font-sans antialiased">{children}</body>
     </html>
   );

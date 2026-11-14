@@ -7,41 +7,32 @@
   --color-line: var(--line);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
-  --color-accent: var(--accent);
+  --color-ship: var(--ship);
+  --color-track: var(--track);
   --color-ok: var(--ok);
   --color-warn: var(--warn);
   --color-danger: var(--danger);
-  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-sans: var(--font-suse), system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, monospace;
 }
 
+/*
+ * Console de operações no padrão das cartas eletrônicas (ECDIS) em modo noturno:
+ * carta escura, navio próprio em laranja e rastro em ciano.
+ */
 :root {
-  color-scheme: light;
-  --bg: #eef1f5;
-  --surface: #ffffff;
-  --surface-2: #f5f7fa;
-  --line: #d8dee6;
-  --ink: #0f172a;
-  --muted: #5b6676;
-  --accent: #0b4f8a;
-  --ok: #15803d;
-  --warn: #b45309;
-  --danger: #dc2626;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --bg: #0b1017;
-    --surface: #111821;
-    --surface-2: #17202b;
-    --line: #263241;
-    --ink: #e6edf5;
-    --muted: #8b98a8;
-    --accent: #3b82c4;
-    --ok: #4ade80;
-    --warn: #f59e0b;
-    --danger: #f87171;
-  }
+  color-scheme: dark;
+  --bg: #04070b;
+  --surface: #091018;
+  --surface-2: #0f1822;
+  --line: #1b2834;
+  --ink: #e3eaf0;
+  --muted: #7f8f9e;
+  --ship: #ff8a1f;
+  --track: #3fd4e6;
+  --ok: #4fd18b;
+  --warn: #ffc531;
+  --danger: #ff4d4d;
 }
 
 html,
@@ -54,12 +45,83 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* O ícone do barco é um divIcon; remove o fundo branco padrão do Leaflet */
-.boat-marker {
+.engraved {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Botões: sobem no hover e afundam no clique */
+.press {
+  transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 180ms, border-color 180ms;
+}
+
+@media (hover: hover) {
+  .press:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.press:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+/* ---------- Carta (Leaflet) ---------- */
+
+.leaflet-container {
+  background: var(--bg);
+  font-family: var(--font-mono);
+}
+
+/* Base OSM invertida para a paleta noturna; as marcas do OpenSeaMap ficam por cima, sem filtro */
+.chart-base {
+  filter: invert(1) hue-rotate(185deg) saturate(0.5) brightness(0.72) contrast(1.15);
+}
+
+.chart-seamarks {
+  filter: brightness(0.95) saturate(0.85);
+}
+
+.leaflet-control-attribution.leaflet-control {
+  background: rgb(4 7 11 / 0.75);
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.leaflet-control-attribution a {
+  color: var(--ink);
+}
+
+.leaflet-tooltip.chart-label {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  box-shadow: none;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+
+.leaflet-tooltip.chart-label::before {
+  display: none;
+}
+
+/* Ícone do navio próprio: sem o fundo branco padrão do divIcon */
+.own-ship {
   background: none;
   border: none;
 }
 
-.boat-marker svg {
-  transition: transform 800ms ease-out;
+@media (prefers-reduced-motion: no-preference) {
+  .own-ship svg {
+    transition: transform 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .bar-fill {
+    transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
 }

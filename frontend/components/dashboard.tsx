@@ -5,19 +5,14 @@ import { useNow } from '@/hooks/use-now';
 import { useTelemetryFeed } from '@/hooks/use-telemetry-feed';
 import { evaluateAlerts, LIMITS } from '@/lib/alerts';
 import { AlertsPanel } from './alerts-panel';
-import { DashboardHeader } from './dashboard-header';
-import { KpiGrid } from './kpi-grid';
+import { FollowToggle, PositionReadout, UtcClock } from './chart-overlays';
+import { EngineSection } from './conning/engine-section';
+import { NavigationSection } from './conning/navigation-section';
+import { PassageSection } from './conning/passage-section';
+import { RailSection } from './conning/rail-section';
 import { MapView } from './map/map-view';
 import { MetricChart } from './metric-chart';
-
-function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="flex flex-col gap-2">
-      <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-muted">{title}</h2>
-      {children}
-    </section>
-  );
-}
+import { VesselPlate } from './vessel-plate';
 
 export function Dashboard() {
   const { track, latest, apiReachable, loading } = useTelemetryFeed();
@@ -26,47 +21,51 @@ export function Dashboard() {
   const alerts = evaluateAlerts(latest, now);
 
   return (
-    <div className="flex h-dvh flex-col">
-      <DashboardHeader latest={latest} apiReachable={apiReachable} loading={loading} now={now} />
+    <div className="flex min-h-dvh flex-col lg:h-dvh lg:flex-row">
+      <div className="relative h-[70dvh] shrink-0 lg:h-auto lg:flex-1">
+        <MapView track={track} latest={latest} follow={follow} />
 
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <div className="relative h-[55vh] lg:h-auto lg:flex-1">
-          <MapView track={track} latest={latest} follow={follow} />
-          <button
-            type="button"
-            onClick={() => setFollow((value) => !value)}
-            aria-pressed={follow}
-            className={`absolute right-3 top-3 z-[1000] rounded-lg border px-3 py-2 text-sm font-medium shadow-sm ${follow ? 'border-accent bg-accent text-white' : 'border-line bg-surface text-ink'}`}
-          >
-            {follow ? 'Seguindo embarcação' : 'Seguir embarcação'}
-          </button>
+        {/* Sobreposições da carta; a camada não captura cliques fora dos próprios elementos */}
+        <div className="pointer-events-none absolute inset-0 z-[1000] flex flex-col justify-between p-4 sm:p-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="pointer-events-auto max-w-md">
+              <VesselPlate latest={latest} apiReachable={apiReachable} loading={loading} now={now} />
+            </div>
+            <div className="pointer-events-auto flex items-center gap-2">
+              <UtcClock now={now} />
+              <FollowToggle follow={follow} onToggle={() => setFollow((value) => !value)} />
+            </div>
+          </div>
+          <div className="pointer-events-auto self-start">
+            <PositionReadout latest={latest} />
+          </div>
         </div>
+      </div>
 
-        <aside className="flex flex-col gap-5 overflow-y-auto border-line bg-surface p-4 lg:w-[400px] lg:border-l">
-          <SidebarSection title={`Alertas${alerts.length ? ` (${alerts.length})` : ''}`}>
-            <AlertsPanel alerts={alerts} />
-          </SidebarSection>
-
-          <SidebarSection title="Telemetria atual">
-            <KpiGrid latest={latest} />
-          </SidebarSection>
-
-          <SidebarSection title={`Histórico · ${track.length} leituras`}>
-            <MetricChart title="Velocidade" unit="nós" data={track} pick={(p) => p.speedKnots} color="#0b4f8a" decimals={1} domain={[0, 16]} />
-            <MetricChart title="Rotação" unit="rpm" data={track} pick={(p) => p.rpm} color="#7c3aed" domain={[0, 2200]} />
+      <aside className="flex flex-col border-line bg-surface lg:w-[420px] lg:overflow-y-auto lg:border-l">
+        <RailSection title="Alarmes" aside={alerts.length > 0 && <span className="font-mono text-xs text-danger">{alerts.length} ativo(s)</span>}>
+          <AlertsPanel alerts={alerts} />
+        </RailSection>
+        <PassageSection latest={latest} now={now} />
+        <NavigationSection latest={latest} />
+        <EngineSection latest={latest} />
+        <RailSection title="Histórico" aside={<span className="font-mono text-xs text-muted">{track.length} leituras</span>}>
+          <div className="flex flex-col gap-5">
+            <MetricChart title="Velocidade" unit="nós" data={track} pick={(p) => p.speedKnots} color="#3fd4e6" decimals={1} domain={[0, 16]} />
+            <MetricChart title="Rotação" unit="rpm" data={track} pick={(p) => p.rpm} color="#7fe0b4" domain={[0, 2200]} />
             <MetricChart
               title="Temperatura do motor"
               unit="°C"
               data={track}
               pick={(p) => p.engineTempC}
-              color="#ea580c"
+              color="#ff8a1f"
               decimals={1}
               domain={[70, 100]}
               threshold={LIMITS.engineTempCritical}
             />
-          </SidebarSection>
-        </aside>
-      </div>
+          </div>
+        </RailSection>
+      </aside>
     </div>
   );
 }
