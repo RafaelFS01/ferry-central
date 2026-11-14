@@ -11,8 +11,17 @@ from src.database.config import (
     normalize_async_database_url,
 )
 
-DEFAULT_SQS_QUEUE_URL = "http://localhost:4566/000000000000/ferry-db-writer-queue"
-DEFAULT_SQS_DLQ_URL = "http://localhost:4566/000000000000/ferry-db-writer-queue-dlq"
+DEFAULT_QUEUE_NAME = "ferry-db-writer-queue"
+DEFAULT_DLQ_NAME = "ferry-db-writer-queue-dlq"
+DEFAULT_LOCAL_ENDPOINT_URL = "http://localhost:4566"
+DEFAULT_LOCALSTACK_ACCOUNT_ID = "000000000000"
+
+DEFAULT_SQS_QUEUE_URL = (
+    f"{DEFAULT_LOCAL_ENDPOINT_URL}/{DEFAULT_LOCALSTACK_ACCOUNT_ID}/{DEFAULT_QUEUE_NAME}"
+)
+DEFAULT_SQS_DLQ_URL = (
+    f"{DEFAULT_LOCAL_ENDPOINT_URL}/{DEFAULT_LOCALSTACK_ACCOUNT_ID}/{DEFAULT_DLQ_NAME}"
+)
 DEFAULT_BATCH_SIZE = 50
 DEFAULT_BATCH_TIMEOUT_SECONDS = 2.0
 DEFAULT_WAIT_TIME_SECONDS = 20
@@ -65,15 +74,19 @@ class WorkerSettings:
     @classmethod
     def from_env(cls) -> WorkerSettings:
         """Carrega e valida configurações do consumidor a partir das variáveis de ambiente."""
+        aws_endpoint = _parse_optional_str(os.getenv("AWS_ENDPOINT_URL"))
+        base_endpoint = aws_endpoint.rstrip("/") if aws_endpoint else DEFAULT_LOCAL_ENDPOINT_URL
+
         queue_url = (
             _parse_optional_str(os.getenv("SQS_QUEUE_URL"))
             or _parse_optional_str(os.getenv("SQS_DB_WRITER_QUEUE_URL"))
-            or DEFAULT_SQS_QUEUE_URL
+            or f"{base_endpoint}/{DEFAULT_LOCALSTACK_ACCOUNT_ID}/{DEFAULT_QUEUE_NAME}"
         )
 
         dlq_url = (
             _parse_optional_str(os.getenv("SQS_DLQ_URL"))
-            or (f"{queue_url}-dlq" if queue_url else DEFAULT_SQS_DLQ_URL)
+            or (f"{queue_url}-dlq" if queue_url and not queue_url.endswith("-dlq") else None)
+            or f"{base_endpoint}/{DEFAULT_LOCALSTACK_ACCOUNT_ID}/{DEFAULT_DLQ_NAME}"
         )
 
         batch_size = int(os.getenv("WORKER_BATCH_SIZE", str(DEFAULT_BATCH_SIZE)))

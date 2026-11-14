@@ -19,6 +19,7 @@ def test_worker_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("SQS_QUEUE_URL", raising=False)
     monkeypatch.delenv("SQS_DB_WRITER_QUEUE_URL", raising=False)
     monkeypatch.delenv("SQS_DLQ_URL", raising=False)
+    monkeypatch.delenv("AWS_ENDPOINT_URL", raising=False)
     monkeypatch.delenv("WORKER_BATCH_SIZE", raising=False)
     monkeypatch.delenv("WORKER_BATCH_TIMEOUT_SECONDS", raising=False)
     monkeypatch.delenv("SQS_WAIT_TIME_SECONDS", raising=False)
@@ -61,6 +62,19 @@ def test_worker_settings_env_overrides(monkeypatch: pytest.MonkeyPatch) -> None:
 
     db_cfg = cfg.to_database_settings()
     assert db_cfg.database_url == cfg.database_url
+
+
+def test_worker_settings_derives_queue_urls_from_aws_endpoint_url(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("SQS_QUEUE_URL", raising=False)
+    monkeypatch.delenv("SQS_DB_WRITER_QUEUE_URL", raising=False)
+    monkeypatch.delenv("SQS_DLQ_URL", raising=False)
+    monkeypatch.setenv("AWS_ENDPOINT_URL", "http://localstack:4566")
+
+    cfg = WorkerSettings.from_env()
+    assert cfg.sqs_queue_url == "http://localstack:4566/000000000000/ferry-db-writer-queue"
+    assert cfg.sqs_dlq_url == "http://localstack:4566/000000000000/ferry-db-writer-queue-dlq"
 
 
 def test_worker_settings_constructs_db_url_from_host_components(
