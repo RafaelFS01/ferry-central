@@ -14,6 +14,9 @@ DEFAULT_IDEMPOTENCY_CACHE_SIZE = 50_000
 DEFAULT_IDEMPOTENCY_CACHE_TTL_SECONDS = 3600.0
 DEFAULT_SHUTDOWN_GRACE_SECONDS = 10.0
 DEFAULT_MAX_MESSAGE_LENGTH_BYTES = 4 * 1024 * 1024
+DEFAULT_REST_ENABLED = False
+DEFAULT_REST_PORT = 8000
+DEFAULT_REST_HOST = "0.0.0.0"
 
 
 class IngestionMode(StrEnum):
@@ -56,6 +59,9 @@ class ServerSettings:
     shutdown_grace_seconds: float = DEFAULT_SHUTDOWN_GRACE_SECONDS
     max_message_length_bytes: int = DEFAULT_MAX_MESSAGE_LENGTH_BYTES
     log_level: str = "INFO"
+    rest_enabled: bool = DEFAULT_REST_ENABLED
+    rest_port: int = DEFAULT_REST_PORT
+    rest_host: str = DEFAULT_REST_HOST
 
     @property
     def bind_address(self) -> str:
@@ -132,6 +138,16 @@ class ServerSettings:
         if max_message_length_bytes <= 0:
             raise ValueError("GRPC_MAX_MESSAGE_LENGTH_BYTES deve ser maior que zero.")
 
+        rest_enabled = _parse_bool(os.getenv("REST_ENABLED"), DEFAULT_REST_ENABLED)
+        rest_port = int(
+            os.getenv("REST_PORT", os.getenv("API_PORT", str(DEFAULT_REST_PORT)))
+        )
+        rest_host = (
+            _parse_optional_str(os.getenv("REST_HOST"))
+            or _parse_optional_str(os.getenv("API_HOST"))
+            or DEFAULT_REST_HOST
+        )
+
         return cls(
             grpc_host=_parse_optional_str(os.getenv("GRPC_HOST")) or DEFAULT_GRPC_HOST,
             grpc_port=grpc_port,
@@ -151,5 +167,8 @@ class ServerSettings:
             shutdown_grace_seconds=shutdown_grace_seconds,
             max_message_length_bytes=max_message_length_bytes,
             log_level=(_parse_optional_str(os.getenv("LOG_LEVEL")) or "INFO").upper(),
+            rest_enabled=rest_enabled,
+            rest_port=rest_port,
+            rest_host=rest_host,
         )
 
