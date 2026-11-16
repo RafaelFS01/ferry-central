@@ -82,6 +82,19 @@ def test_server_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
     assert settings.direct_path_enabled is True
     assert settings.decoupled_path_enabled is False
     assert settings.sns_topic_name == DEFAULT_SNS_TOPIC_NAME == "ferry-telemetry-topic"
+    assert settings.rest_enabled is False
+    assert settings.rest_port == 8000
+
+
+def test_server_settings_rest_configuration(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("REST_ENABLED", "true")
+    monkeypatch.setenv("REST_PORT", "8080")
+    monkeypatch.setenv("REST_HOST", "127.0.0.1")
+
+    settings = ServerSettings.from_env()
+    assert settings.rest_enabled is True
+    assert settings.rest_port == 8080
+    assert settings.rest_host == "127.0.0.1"
 
 
 def test_server_settings_auto_enables_both_when_sns_configured(
