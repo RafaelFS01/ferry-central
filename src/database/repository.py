@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -140,11 +140,91 @@ class TelemetryRepository:
         boat_id: str,
         limit: int = 100,
         offset: int = 0,
+        from_time: datetime | None = None,
+        to_time: datetime | None = None,
+        order_asc: bool = False,
     ) -> list[Telemetry]:
-        """Retorna histórico paginado em ordem decrescente de timestamp para a embarcação."""
+        """Retorna histórico paginado para a embarcação com suporte a intervalo temporal."""
+        stmt = select(Telemetry).where(Telemetry.boat_id == boat_id)
+        if from_time is not None:
+            stmt = stmt.where(Telemetry.timestamp >= ensure_utc_datetime(from_time))
+        if to_time is not None:
+            stmt = stmt.where(Telemetry.timestamp <= ensure_utc_datetime(to_time))
+
+        if order_asc:
+            stmt = stmt.order_by(Telemetry.timestamp.asc())
+        else:
+            stmt = stmt.order_by(Telemetry.timestamp.desc())
+
+        stmt = stmt.limit(limit).offset(offset)
+        result = await self._session.scalars(stmt)
+        return list(result.all())
+
+    async def count_history_by_boat(
+        self,
+        boat_id: str,
+        from_time: datetime | None = None,
+        to_time: datetime | None = None,
+    ) -> int:
+        """Retorna a contagem total de pacotes de uma embarcação dentro do intervalo temporal."""
+        stmt = (
+            select(func.count())
+            .select_from(Telemetry)
+            .where(Telemetry.boat_id == boat_id)
+        )
+        if from_time is not None:
+            stmt = stmt.where(Telemetry.timestamp >= ensure_utc_datetime(from_time))
+        if to_time is not None:
+            stmt = stmt.where(Telemetry.timestamp <= ensure_utc_datetime(to_time))
+        count = await self._session.scalar(stmt)
+        return int(count or 0)
+
+    async def list_distinct_boats(self) -> list[str]:
+        """Lista os identificadores únicos de embarcações presentes na base."""
+        stmt = select(Telemetry.boat_id).distinct().order_by(Telemetry.boat_id)
+        result = await self._session.scalars(stmt)
+        return list(result.all())
+
+    async def get_boat_stats(
+        self,
+        boat_id: str,
+        since: datetime | None = None,
+    ) -> dict[str, Any]:
+        """Retorna métricas agregadas da embarcação (média de velocidade e total de pacotes)."""
+        stmt = select(
+            func.avg(Telemetry.speed_knots).label("avg_speed"),
+            func.count(Telemetry.packet_id).label("total_packets"),
+        ).where(Telemetry.boat_id == boat_id)
+        if since is not None:
+            stmt = stmt.where(Telemetry.timestamp >= ensure_utc_datetime(since))
+
+        row = (await self._session.execute(stmt)).one()
+        return {
+            "avg_speed": float(row.avg_speed) if row.avg_speed is not None else None,
+            "total_packets": int(row.total_packets or 0),
+        }
+
+    async def get_fleet_avg_speed(self, since: datetime | None = None) -> float | None:
+        """Calcula a velocidade média geral de toda a frota."""
+        stmt = select(func.avg(Telemetry.speed_knots)).select_from(Telemetry)
+        if since is not None:
+            stmt = stmt.where(Telemetry.timestamp >= ensure_utc_datetime(since))
+        val = await self._session.scalar(stmt)
+        return float(val) if val is not None else None
+
+    async def get_latest_global(self) -> Telemetry | None:
+        """Retorna o registro de telemetria mais recente de qualquer embarcação."""
+        stmt = select(Telemetry).order_by(Telemetry.timestamp.desc()).limit(1)
+        return await self._session.scalar(stmt)
+
+    async def get_history_global(
+        self,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Telemetry]:
+        """Retorna o histórico geral paginado em ordem decrescente."""
         stmt = (
             select(Telemetry)
-            .where(Telemetry.boat_id == boat_id)
             .order_by(Telemetry.timestamp.desc())
             .limit(limit)
             .offset(offset)

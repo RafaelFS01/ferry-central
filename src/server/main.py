@@ -165,11 +165,43 @@ async def serve(settings: ServerSettings | None = None) -> None:
             # Windows ProactorEventLoop não suporta add_signal_handler.
             pass
 
+    rest_server = None
+    rest_task = None
+    if cfg.rest_enabled:
+        import uvicorn
+        from src.api.config import ApiSettings
+        from src.api.main import create_app
+
+        api_settings = ApiSettings(
+            api_host=cfg.rest_host,
+            api_port=cfg.rest_port,
+            log_level=cfg.log_level,
+        )
+        api_app = create_app(api_settings)
+        uvicorn_config = uvicorn.Config(
+            app=api_app,
+            host=cfg.rest_host,
+            port=cfg.rest_port,
+            log_level=cfg.log_level.lower(),
+            access_log=True,
+        )
+        rest_server = uvicorn.Server(uvicorn_config)
+        rest_task = asyncio.create_task(rest_server.serve())
+        logger.info(
+            "API REST da Central escutando em http://%s:%d (FastAPI)",
+            cfg.rest_host,
+            cfg.rest_port,
+        )
+
     try:
         server_task = asyncio.create_task(runtime.server.wait_for_termination())
         stop_task = asyncio.create_task(stop_event.wait())
+        wait_tasks = {server_task, stop_task}
+        if rest_task is not None:
+            wait_tasks.add(rest_task)
+
         _, pending = await asyncio.wait(
-            {server_task, stop_task},
+            wait_tasks,
             return_when=asyncio.FIRST_COMPLETED,
         )
         for task in pending:
@@ -179,6 +211,8 @@ async def serve(settings: ServerSettings | None = None) -> None:
     except (KeyboardInterrupt, asyncio.CancelledError):
         logger.info("Interrupção recebida, iniciando graceful shutdown...")
     finally:
+        if rest_server is not None:
+            rest_server.should_exit = True
         logger.info("Encerrando servidor gRPC Central...")
         await shutdown_runtime(runtime, dispose_db=cfg.direct_path_enabled)
         logger.info("Servidor gRPC Central encerrado com sucesso.")
