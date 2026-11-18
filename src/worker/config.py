@@ -71,7 +71,6 @@ class WorkerSettings:
             pool_timeout=self.db_pool_timeout,
         )
 
-
     @classmethod
     def from_env(cls) -> WorkerSettings:
         """Carrega e valida configurações do consumidor a partir das variáveis de ambiente."""
