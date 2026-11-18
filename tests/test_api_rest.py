@@ -10,14 +10,12 @@ import httpx
 import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.api.config import ApiSettings
-from src.api.dependencies import get_api_settings, get_db_session
+from src.api.dependencies import get_db_session
 from src.api.main import create_app
 from src.database import (
     TelemetryRecordInput,
     TelemetryRepository,
 )
-from src.database.models import Telemetry
 
 
 def _create_record(

@@ -6,7 +6,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from sqlalchemy.exc import SQLAlchemyError
