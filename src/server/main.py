@@ -12,6 +12,7 @@ from grpc_health.v1 import health, health_pb2, health_pb2_grpc
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from src.database.session import dispose_engine, get_session_factory
+from src.logging_config import configure_json_logging
 from src.proto import telemetry_pb2, telemetry_pb2_grpc
 from src.server.config import ServerSettings
 from src.server.idempotency import IdempotencyGuard, InMemoryIdempotencyCache
@@ -37,11 +38,8 @@ class GrpcServerRuntime:
 
 
 def configure_logging(level: str = "INFO") -> None:
-    """Configura logging estruturado padrão para o servidor Central."""
-    logging.basicConfig(
-        level=getattr(logging, level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    """Configura logging estruturado em JSON para o serviço de ingestão."""
+    configure_json_logging(service="ingestion", level=level)
 
 
 def _default_server_options(settings: ServerSettings) -> list[tuple[str, int]]:
@@ -183,6 +181,7 @@ async def serve(settings: ServerSettings | None = None) -> None:
             host=cfg.rest_host,
             port=cfg.rest_port,
             log_level=cfg.log_level.lower(),
+            log_config=None,
             access_log=True,
         )
         rest_server = uvicorn.Server(uvicorn_config)
