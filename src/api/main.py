@@ -16,8 +16,14 @@ from src.api.routes.compat import router as compat_router
 from src.api.routes.health import router as health_router
 from src.api.routes.metrics import router as metrics_router
 from src.database.session import dispose_engine, get_session_factory
+from src.logging_config import configure_json_logging
 
 logger = logging.getLogger(__name__)
+
+
+def configure_logging(level: str = "INFO") -> None:
+    """Configura logging estruturado em JSON para a API REST da Central."""
+    configure_json_logging(service="api", level=level)
 
 
 @asynccontextmanager
@@ -71,11 +77,13 @@ app = create_app()
 def run_api_server(settings: ApiSettings | None = None) -> None:
     """Inicia o servidor HTTP da API REST via Uvicorn."""
     cfg = settings or ApiSettings.from_env()
+    configure_logging(cfg.log_level)
     uvicorn.run(
         "src.api.main:app",
         host=cfg.api_host,
         port=cfg.api_port,
         log_level=cfg.log_level.lower(),
+        log_config=None,
         access_log=True,
     )
 
