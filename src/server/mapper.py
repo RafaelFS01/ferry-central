@@ -46,6 +46,14 @@ def _extract_sequence_number(
     packet: telemetry_pb2.TelemetryPacket,
     metadata: Sequence[tuple[str, str | bytes]] | None,
 ) -> int:
+    """Resolve a sequência: campo 8 do contrato > metadado legado > timestamp_coleta.
+
+    O campo `sequence_number` é `optional` no proto; `HasField` distingue a
+    sequência explícita do emissor de um pacote legado que não a preenche.
+    """
+    if packet.HasField("sequence_number"):
+        return int(packet.sequence_number)
+
     if metadata:
         for key, raw_value in metadata:
             if key.lower() != SEQUENCE_METADATA_KEY:
