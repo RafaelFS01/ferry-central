@@ -8,7 +8,6 @@ import { AlertsPanel } from './alerts-panel';
 import { FollowToggle, PositionReadout, UtcClock } from './chart-overlays';
 import { EngineSection } from './conning/engine-section';
 import { NavigationSection } from './conning/navigation-section';
-import { OccupancySection } from './conning/occupancy-section';
 import { PassageSection } from './conning/passage-section';
 import { RailSection } from './conning/rail-section';
 import { MapView } from './map/map-view';
@@ -49,7 +48,6 @@ export function Dashboard() {
         </RailSection>
         <PassageSection latest={latest} now={now} />
         <NavigationSection latest={latest} />
-        <OccupancySection latest={latest} />
         <EngineSection latest={latest} />
         <RailSection title="Histórico" aside={<span className="font-mono text-xs text-muted">{track.length} leituras</span>}>
           <div className="flex flex-col gap-5">
