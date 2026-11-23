@@ -226,6 +226,7 @@ def validate_and_map_packet(
         engine_rpm=engine_rpm,
         engine_temp_celsius=engine_temp,
         fuel_level_percent=fuel_level,
+        passengers=int(packet.passageiros),
         network_latency_ms=network_latency,
         network_rssi_dbm=network_rssi,
     )

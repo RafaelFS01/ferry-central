@@ -43,6 +43,9 @@ class Telemetry(Base):
     fuel_level_percent: Mapped[float | None] = mapped_column(Double, nullable=True)
     battery_voltage: Mapped[float | None] = mapped_column(Double, nullable=True)
 
+    # Ocupação a bordo
+    passengers: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
     # Métricas de rede
     network_latency_ms: Mapped[float | None] = mapped_column(Double, nullable=True)
     network_rssi_dbm: Mapped[int | None] = mapped_column(Integer, nullable=True)

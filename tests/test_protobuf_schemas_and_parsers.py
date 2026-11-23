@@ -334,6 +334,7 @@ def test_protobuf_sns_payload_roundtrip_compatibility_with_worker_parser() -> No
     assert parsed_by_worker.latitude == pytest.approx(mapped.record.latitude)
     assert parsed_by_worker.longitude == pytest.approx(mapped.record.longitude)
     assert parsed_by_worker.speed_knots == pytest.approx(mapped.record.speed_knots)
+    assert parsed_by_worker.passengers == mapped.record.passengers == 240
     assert parsed_by_worker.course_heading == pytest.approx(mapped.record.course_heading)
     assert parsed_by_worker.engine_rpm == pytest.approx(mapped.record.engine_rpm)
     assert parsed_by_worker.engine_temp_celsius == pytest.approx(mapped.record.engine_temp_celsius)
@@ -491,6 +492,17 @@ def test_worker_parser_handles_datetime_variants_and_optional_telemetry_fields()
                 "network_rssi_dbm": "bad-rssi",
             },
             "RSSI de rede inválido",
+        ),
+        (
+            {
+                "packet_id": str(uuid4()),
+                "boat_id": "ferry-1",
+                "timestamp": "2026-11-18T10:00:00Z",
+                "latitude": -12.9,
+                "longitude": -38.5,
+                "passageiros": -3,
+            },
+            "passageiros",
         ),
     ],
 )

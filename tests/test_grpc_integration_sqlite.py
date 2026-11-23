@@ -191,6 +191,7 @@ async def test_grpc_direct_ingestion_persists_packet_in_sqlite_database(
             assert saved.latitude == pytest.approx(-12.9714)
             assert saved.longitude == pytest.approx(-38.5014)
             assert saved.speed_knots == pytest.approx(14.4)
+            assert saved.passengers == 310
             assert saved.course_heading == pytest.approx(248.0)
             assert saved.engine_rpm == pytest.approx(1580.0)
             assert saved.engine_temp_celsius == pytest.approx(82.0)
