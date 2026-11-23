@@ -231,6 +231,33 @@ def test_validate_and_map_packet_maps_record_and_sns_payload() -> None:
     assert mapped.sns_attributes["boat_id"] == "ferry-ivete-sangalo"
 
 
+def test_validate_and_map_packet_prefers_contract_sequence_field() -> None:
+    packet = _make_proto_packet(timestamp_coleta=1762800000000)
+    packet.sequence_number = 17280
+
+    mapped = validate_and_map_packet(packet, metadata=[("x-sequence-number", "42")])
+
+    assert mapped.sequence_number == 17280
+    assert mapped.record.sequence_number == 17280
+    assert mapped.sns_payload["sequence_number"] == 17280
+    assert mapped.sns_payload["timestamp_coleta"] == 1762800000000
+
+
+def test_validate_and_map_packet_accepts_explicit_zero_sequence() -> None:
+    packet = _make_proto_packet(timestamp_coleta=1762800000000)
+    packet.sequence_number = 0
+
+    assert validate_and_map_packet(packet).sequence_number == 0
+
+
+def test_validate_and_map_packet_legacy_sequence_fallbacks() -> None:
+    packet = _make_proto_packet(timestamp_coleta=1762800000000)
+    assert not packet.HasField("sequence_number")
+
+    assert validate_and_map_packet(packet, metadata=[("x-sequence-number", "7")]).sequence_number == 7
+    assert validate_and_map_packet(packet).sequence_number == 1762800000000
+
+
 def test_validate_and_map_packet_rejects_invalid_fields() -> None:
     missing_nav = telemetry_pb2.TelemetryPacket(
         message_id=str(uuid4()),
