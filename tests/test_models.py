@@ -27,6 +27,7 @@ def test_telemetry_table_columns_and_types() -> None:
         "engine_temp_celsius",
         "fuel_level_percent",
         "battery_voltage",
+        "passengers",
         "network_latency_ms",
         "network_rssi_dbm",
         "created_at",

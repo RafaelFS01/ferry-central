@@ -45,6 +45,7 @@ class TelemetryRecordInput:
     engine_temp_celsius: float | None = None
     fuel_level_percent: float | None = None
     battery_voltage: float | None = None
+    passengers: int | None = None
     network_latency_ms: float | None = None
     network_rssi_dbm: int | None = None
 

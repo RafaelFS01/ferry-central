@@ -18,6 +18,7 @@ export interface CentralTelemetryRow {
   engine_temp_celsius?: number | null;
   fuel_level_percent?: number | null;
   battery_voltage?: number | null;
+  passengers?: number | null;
   network_latency_ms?: number | null;
 }
 
@@ -34,6 +35,8 @@ export interface TelemetryPoint {
   engineTempC: number | null;
   fuelPercent: number | null;
   batteryV: number | null;
+  /** Passageiros a bordo; nulo em leituras anteriores à coluna */
+  passengers: number | null;
 }
 
 export function toPoint(row: CentralTelemetryRow): TelemetryPoint {
@@ -49,6 +52,7 @@ export function toPoint(row: CentralTelemetryRow): TelemetryPoint {
     engineTempC: row.engine_temp_celsius ?? null,
     fuelPercent: row.fuel_level_percent ?? null,
     batteryV: row.battery_voltage ?? null,
+    passengers: row.passengers ?? null,
   };
 }
 

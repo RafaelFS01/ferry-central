@@ -28,6 +28,7 @@ class TelemetryResponse(BaseModel):
     engine_temp_celsius: float | None = Field(default=None, description="Temperatura do motor em °C")
     fuel_level_percent: float | None = Field(default=None, description="Nível de combustível em %")
     battery_voltage: float | None = Field(default=None, description="Tensão elétrica do banco de baterias em Volts")
+    passengers: int | None = Field(default=None, description="Passageiros a bordo na leitura")
     network_latency_ms: float | None = Field(default=None, description="Latência de rede em ms")
     network_rssi_dbm: int | None = Field(default=None, description="Intensidade de sinal RSSI em dBm")
     created_at: datetime = Field(..., description="Timestamp de auditoria de ingestão no banco")

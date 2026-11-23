@@ -220,6 +220,14 @@ def parse_sqs_message(body: str | Mapping[str, Any]) -> TelemetryRecordInput:
     if raw_voltage is not None:
         battery_voltage = _require_finite(raw_voltage, "battery_voltage")
 
+    # Ocupação a bordo (contrato aninhado usa 'passageiros'; o formato plano, 'passengers')
+    raw_passengers = data.get("passageiros", data.get("passengers"))
+    passengers: int | None = None
+    if raw_passengers is not None:
+        if isinstance(raw_passengers, bool) or not isinstance(raw_passengers, int) or raw_passengers < 0:
+            raise CorruptedMessageError(f"Quantidade de passageiros inválida: {raw_passengers!r}")
+        passengers = raw_passengers
+
     # Diagnóstico de rede (aninhado ou plano)
     rede = data.get("rede")
     if isinstance(rede, dict):
@@ -259,6 +267,7 @@ def parse_sqs_message(body: str | Mapping[str, Any]) -> TelemetryRecordInput:
         engine_temp_celsius=engine_temp_celsius,
         fuel_level_percent=fuel_level_percent,
         battery_voltage=battery_voltage,
+        passengers=passengers,
         network_latency_ms=network_latency_ms,
         network_rssi_dbm=network_rssi_dbm,
     )
