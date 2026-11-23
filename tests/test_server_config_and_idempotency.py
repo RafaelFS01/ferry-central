@@ -72,7 +72,19 @@ def test_server_settings_defaults(monkeypatch: pytest.MonkeyPatch) -> None:
         "SNS_ENABLED",
         "SNS_TOPIC_ARN",
         "SNS_TOPIC_NAME",
+        "AWS_REGION",
+        "AWS_DEFAULT_REGION",
         "AWS_ENDPOINT_URL",
+        "IDEMPOTENCY_CACHE_SIZE",
+        "IDEMPOTENCY_CACHE_TTL_SECONDS",
+        "GRPC_SHUTDOWN_GRACE_SECONDS",
+        "GRPC_MAX_MESSAGE_LENGTH_BYTES",
+        "LOG_LEVEL",
+        "REST_ENABLED",
+        "REST_PORT",
+        "REST_HOST",
+        "API_PORT",
+        "API_HOST",
     ):
         monkeypatch.delenv(var, raising=False)
 

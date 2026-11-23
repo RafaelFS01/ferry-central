@@ -9,6 +9,7 @@ import sys
 from typing import Any
 
 from src.database.session import create_async_db_engine, create_session_factory
+from src.logging_config import configure_json_logging
 from src.worker.config import WorkerSettings
 from src.worker.consumer import TelemetryBatchWorker
 from src.worker.sqs_client import BotoSqsClient
@@ -17,11 +18,8 @@ logger = logging.getLogger("src.worker.main")
 
 
 def configure_logging(level: str = "INFO") -> None:
-    """Configura logging formatado padrão do worker."""
-    logging.basicConfig(
-        level=getattr(logging, level.upper(), logging.INFO),
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+    """Configura logging estruturado em JSON para o worker."""
+    configure_json_logging(service="worker", level=level)
 
 
 async def run_worker(settings: WorkerSettings | None = None) -> None:

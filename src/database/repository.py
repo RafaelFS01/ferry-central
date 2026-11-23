@@ -10,6 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.database.models import Telemetry
@@ -70,6 +71,14 @@ class TelemetryRepository:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session
 
+    def _insert_statement(self) -> Any:
+        """Retorna construtor INSERT compatível com o dialeto ativo (PostgreSQL ou SQLite)."""
+        bind = getattr(self._session, "bind", None)
+        dialect_name = getattr(getattr(bind, "dialect", None), "name", None)
+        if dialect_name == "sqlite":
+            return sqlite_insert(Telemetry)
+        return pg_insert(Telemetry)
+
     async def insert_packet(
         self,
         record: TelemetryRecordInput | Mapping[str, Any],
@@ -80,7 +89,7 @@ class TelemetryRepository:
         """
         payload = _normalize_record(record)
         stmt = (
-            pg_insert(Telemetry)
+            self._insert_statement()
             .values(**payload)
             .on_conflict_do_nothing(index_elements=[Telemetry.packet_id])
             .returning(Telemetry.packet_id)
@@ -106,7 +115,7 @@ class TelemetryRepository:
         for start in range(0, len(records), chunk_size):
             chunk = [_normalize_record(item) for item in records[start : start + chunk_size]]
             stmt = (
-                pg_insert(Telemetry)
+                self._insert_statement()
                 .values(chunk)
                 .on_conflict_do_nothing(index_elements=[Telemetry.packet_id])
                 .returning(Telemetry.packet_id)
