@@ -44,32 +44,38 @@ ACK_STATUS_DUPLICADO_IGNORADO: AckStatus
 ACK_STATUS_REJEITADO: AckStatus
 
 class NavigationData(_message.Message):
-    __slots__ = ("latitude", "longitude", "velocidade_nos", "rumo_graus", "status_navegacao")
+    __slots__ = ("latitude", "longitude", "velocidade_nos", "rumo_graus", "status_navegacao", "hdop", "satelites")
     LATITUDE_FIELD_NUMBER: _ClassVar[int]
     LONGITUDE_FIELD_NUMBER: _ClassVar[int]
     VELOCIDADE_NOS_FIELD_NUMBER: _ClassVar[int]
     RUMO_GRAUS_FIELD_NUMBER: _ClassVar[int]
     STATUS_NAVEGACAO_FIELD_NUMBER: _ClassVar[int]
+    HDOP_FIELD_NUMBER: _ClassVar[int]
+    SATELITES_FIELD_NUMBER: _ClassVar[int]
     latitude: float
     longitude: float
     velocidade_nos: float
     rumo_graus: float
     status_navegacao: NavigationStatus
-    def __init__(self, latitude: _Optional[float] = ..., longitude: _Optional[float] = ..., velocidade_nos: _Optional[float] = ..., rumo_graus: _Optional[float] = ..., status_navegacao: _Optional[_Union[NavigationStatus, str]] = ...) -> None: ...
+    hdop: float
+    satelites: int
+    def __init__(self, latitude: _Optional[float] = ..., longitude: _Optional[float] = ..., velocidade_nos: _Optional[float] = ..., rumo_graus: _Optional[float] = ..., status_navegacao: _Optional[_Union[NavigationStatus, str]] = ..., hdop: _Optional[float] = ..., satelites: _Optional[int] = ...) -> None: ...
 
 class PropulsionData(_message.Message):
-    __slots__ = ("rpm_motor", "temperatura_motor_celsius", "pressao_oleo_bar", "nivel_combustivel_percentual", "consumo_instantaneo_lph")
+    __slots__ = ("rpm_motor", "temperatura_motor_celsius", "pressao_oleo_bar", "nivel_combustivel_percentual", "consumo_instantaneo_lph", "tensao_bateria_volts")
     RPM_MOTOR_FIELD_NUMBER: _ClassVar[int]
     TEMPERATURA_MOTOR_CELSIUS_FIELD_NUMBER: _ClassVar[int]
     PRESSAO_OLEO_BAR_FIELD_NUMBER: _ClassVar[int]
     NIVEL_COMBUSTIVEL_PERCENTUAL_FIELD_NUMBER: _ClassVar[int]
     CONSUMO_INSTANTANEO_LPH_FIELD_NUMBER: _ClassVar[int]
+    TENSAO_BATERIA_VOLTS_FIELD_NUMBER: _ClassVar[int]
     rpm_motor: float
     temperatura_motor_celsius: float
     pressao_oleo_bar: float
     nivel_combustivel_percentual: float
     consumo_instantaneo_lph: float
-    def __init__(self, rpm_motor: _Optional[float] = ..., temperatura_motor_celsius: _Optional[float] = ..., pressao_oleo_bar: _Optional[float] = ..., nivel_combustivel_percentual: _Optional[float] = ..., consumo_instantaneo_lph: _Optional[float] = ...) -> None: ...
+    tensao_bateria_volts: float
+    def __init__(self, rpm_motor: _Optional[float] = ..., temperatura_motor_celsius: _Optional[float] = ..., pressao_oleo_bar: _Optional[float] = ..., nivel_combustivel_percentual: _Optional[float] = ..., consumo_instantaneo_lph: _Optional[float] = ..., tensao_bateria_volts: _Optional[float] = ...) -> None: ...
 
 class NetworkDiagnostics(_message.Message):
     __slots__ = ("rssi_dbm", "latencia_rtt_ms", "perda_pacotes_percentual", "tamanho_buffer_local", "tentativa_envio", "tipo_enlace")
@@ -88,7 +94,7 @@ class NetworkDiagnostics(_message.Message):
     def __init__(self, rssi_dbm: _Optional[int] = ..., latencia_rtt_ms: _Optional[float] = ..., perda_pacotes_percentual: _Optional[float] = ..., tamanho_buffer_local: _Optional[int] = ..., tentativa_envio: _Optional[int] = ..., tipo_enlace: _Optional[_Union[LinkType, str]] = ...) -> None: ...
 
 class TelemetryPacket(_message.Message):
-    __slots__ = ("message_id", "boat_id", "timestamp_coleta", "passageiros", "navegacao", "propulsao", "rede")
+    __slots__ = ("message_id", "boat_id", "timestamp_coleta", "passageiros", "navegacao", "propulsao", "rede", "sequence_number")
     MESSAGE_ID_FIELD_NUMBER: _ClassVar[int]
     BOAT_ID_FIELD_NUMBER: _ClassVar[int]
     TIMESTAMP_COLETA_FIELD_NUMBER: _ClassVar[int]
@@ -96,6 +102,7 @@ class TelemetryPacket(_message.Message):
     NAVEGACAO_FIELD_NUMBER: _ClassVar[int]
     PROPULSAO_FIELD_NUMBER: _ClassVar[int]
     REDE_FIELD_NUMBER: _ClassVar[int]
+    SEQUENCE_NUMBER_FIELD_NUMBER: _ClassVar[int]
     message_id: str
     boat_id: str
     timestamp_coleta: int
@@ -103,7 +110,8 @@ class TelemetryPacket(_message.Message):
     navegacao: NavigationData
     propulsao: PropulsionData
     rede: NetworkDiagnostics
-    def __init__(self, message_id: _Optional[str] = ..., boat_id: _Optional[str] = ..., timestamp_coleta: _Optional[int] = ..., passageiros: _Optional[int] = ..., navegacao: _Optional[_Union[NavigationData, _Mapping]] = ..., propulsao: _Optional[_Union[PropulsionData, _Mapping]] = ..., rede: _Optional[_Union[NetworkDiagnostics, _Mapping]] = ...) -> None: ...
+    sequence_number: int
+    def __init__(self, message_id: _Optional[str] = ..., boat_id: _Optional[str] = ..., timestamp_coleta: _Optional[int] = ..., passageiros: _Optional[int] = ..., navegacao: _Optional[_Union[NavigationData, _Mapping]] = ..., propulsao: _Optional[_Union[PropulsionData, _Mapping]] = ..., rede: _Optional[_Union[NetworkDiagnostics, _Mapping]] = ..., sequence_number: _Optional[int] = ...) -> None: ...
 
 class TelemetryAck(_message.Message):
     __slots__ = ("message_id", "sucesso", "duplicado", "processado_em", "mensagem", "status")
